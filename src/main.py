@@ -73,7 +73,7 @@ if __name__ == '__main__':
                             if currentIndex > 0:
                                 currentIndex = currentIndex - 1
                             else :
-                                currentIndex = 0
+                                currentIndex = 3
 
                             # 新しいプロセスの取得
                             doProcess(currentIndex)
