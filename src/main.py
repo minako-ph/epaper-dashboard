@@ -22,15 +22,12 @@ def doProcess(idx):
             epd.display(epd.getbuffer(Page_1))
         if idx == 1:
             Page_2 = Image.open(os.path.join(picdir, 'page-2.jpg'))
-            epd.Clear()
             epd.display(epd.getbuffer(Page_2))
         if idx == 2:
             Page_3 = Image.open(os.path.join(picdir, 'page-3.jpg'))
-            epd.Clear()
             epd.display(epd.getbuffer(Page_3))
         if idx == 3:
             Page_3 = Image.open(os.path.join(picdir, 'page-4.jpg'))
-            epd.Clear()
             epd.display(epd.getbuffer(Page_3))
         
     except IOError as e:
