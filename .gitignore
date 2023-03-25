@@ -1,5 +1,2 @@
-/lib/__pycache__/*
-/pic/*
-/src/*/node_modules/*
+/*/__pycache__/*
 .env
-src/__pycache__/
