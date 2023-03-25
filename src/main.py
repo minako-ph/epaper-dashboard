@@ -7,18 +7,18 @@ from lib import epd5in65f
 from PIL import Image
 import evdev
 import time
-
+from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(level=logging.DEBUG)
 picdir = '../image'
 
 
-def doProcess(idx):
+def doProcess(currentIndex):
     try:
-        if idx == 0:
+        if currentIndex == 0:
             Page_1 = Image.open(os.path.join(picdir, 'page-1.jpg'))
             epd.display(epd.getbuffer(Page_1))
-        if idx == 1:
+        if currentIndex == 1:
             # Notion itemの取得
             tasks = get_daily_task_items()
             items = get_calendar_items()
@@ -30,10 +30,17 @@ def doProcess(idx):
                 time.sleep(300)
                 new_tasks = get_daily_task_items()
                 new_items = get_calendar_items()
-        if idx == 2:
+
+                if set(new_tasks) != set(tasks) or set(new_items) != set(items):
+                    # 差分があった場合は再描画
+                    display_page_1(new_tasks, new_items)
+                    tasks = new_tasks
+                    items = new_items
+
+        if currentIndex == 2:
             page_3 = Image.open(os.path.join(picdir, 'page-3.jpg'))
             epd.display(epd.getbuffer(page_3))
-        if idx == 3:
+        if currentIndex == 3:
             page_3 = Image.open(os.path.join(picdir, 'page-4.jpg'))
             epd.display(epd.getbuffer(page_3))
     except IOError as e:
@@ -44,16 +51,7 @@ def doProcess(idx):
         exit()
 
 
-if __name__ == '__main__':
-    # 初期化
-    epd = epd5in65f.EPD()
-    epd.init()
-    epd.Clear()
-
-    # 初回実行
-    currentIndex = 1
-    doProcess(currentIndex)
-
+def getKeyEvent(currentIndex):
     while True:
         try:
             device = evdev.InputDevice('/dev/input/event0')
@@ -84,3 +82,16 @@ if __name__ == '__main__':
         except:
             print('Retry...')
             time.sleep(1)
+
+
+if __name__ == '__main__':
+    # 初期化
+    epd = epd5in65f.EPD()
+    epd.init()
+    epd.Clear()
+
+    # 初回実行
+    with ThreadPoolExecutor() as executor:
+        currentIndex = 1
+        executor.submit(doProcess, currentIndex)
+        executor.submit(getKeyEvent, currentIndex)
