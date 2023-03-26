@@ -2,7 +2,6 @@ import os
 from notion_client import Client
 from dotenv import load_dotenv
 import datetime
-import json
 from util import is_time_in_range
 
 # .envファイルの読み込み
@@ -44,8 +43,8 @@ def get_daily_task_items():
     result = {}
     # 結果を表示
     for item in results['results']:
-        json_str = json.dumps(item, indent=4, ensure_ascii=False)
-        print(json_str)
+        # json_str = json.dumps(item, indent=4, ensure_ascii=False)
+        # print(json_str)
         key = item['properties']['タスクの状態']['formula']['string']
         title = item['properties']['name']['title'][0]['plain_text']
         status = item['properties']['ステータス']['select']['name']

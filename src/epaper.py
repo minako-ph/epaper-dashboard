@@ -1,19 +1,65 @@
 import os
 
+from weather import get_contents_coordinates, get_weather_icon
 from lib import epd5in65f
 from PIL import Image, ImageFont, ImageDraw
+import datetime
+from util import get_japanese_weekday
 
 epd = epd5in65f.EPD()
 picdir = '../image'
 
+font40 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 40)
 font16 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 16)
 font14 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 14)
 font10 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 10)
 
 
-def display_weather_dashboard():
+def display_weather_dashboard(weathers, today):
     image = Image.open(os.path.join(picdir, 'page-0.jpg'))
-    epd.display(epd.getbuffer(image))
+    combined_image = Image.new('RGB', (epd.width, epd.height),
+                               0xffffff)  # 255: clear the frame
+    combined_image.paste(image, (0, 0))
+    draw = ImageDraw.Draw(combined_image)
+
+    # 日付
+    today = datetime.date.today()
+    day = get_japanese_weekday(today)
+    date_str = today.strftime(f'%Y年%m月%d日 ({day})')
+    draw.text((140, 100), date_str, font=font40, fill='#6F6F6F', spacing=8)
+
+    # 座標
+    coordinates = get_contents_coordinates()
+
+    for index, weather in enumerate(weathers):
+        coordinate = coordinates[index]
+        # 天気アイコン
+        image_coordinate = coordinate['image']
+        weather_id = weather['weather_id']
+        icon = get_weather_icon(weather_id)
+        icon_path = os.path.join(picdir, icon)
+        icon_image = Image.open(icon_path)
+        combined_image.paste(
+            icon_image, (image_coordinate['x'], image_coordinate['y']))
+        # 曜日
+        day_coordinate = coordinate['day']
+        day = weather['day']
+        draw.text((day_coordinate['x'], day_coordinate['y']), day,
+                  font=font14, fill=epd.BLACK, spacing=8)
+        # 気温
+        temperature_coordinate = coordinate['temperature']
+        max_temp = weather["max_temp"]
+        min_temp = weather["min_temp"]
+        temp = f'{min_temp}°/{max_temp}°'
+        draw.text(
+            (temperature_coordinate['x'], temperature_coordinate['y']),
+            temp,
+            font=font14,
+            fill=epd.BLACK,
+            spacing=8
+        )
+
+    epd.display(epd.getbuffer(combined_image))
 
 
 def display_task_dashboard(tasks, items):
@@ -68,11 +114,20 @@ def display_task_dashboard(tasks, items):
 
 
 def display_goal_dashboard():
+    # 初期化
+    epd = epd5in65f.EPD()
+    epd.init()
+    epd.Clear()
     # 背景画像の描画
     image = Image.open(os.path.join(picdir, 'page-2.jpg'))
     epd.display(epd.getbuffer(image))
 
 
 def display_milestone_dashboard():
+    # 初期化
+    epd = epd5in65f.EPD()
+    epd.init()
+    epd.Clear()
     image = Image.open(os.path.join(picdir, 'page-3.jpg'))
     epd.display(epd.getbuffer(image))
+
