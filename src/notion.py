@@ -2,6 +2,8 @@ import os
 from notion_client import Client
 from dotenv import load_dotenv
 import datetime
+import json
+from util import is_time_in_range
 
 # .envファイルの読み込み
 load_dotenv()
@@ -31,7 +33,7 @@ def get_daily_task_items():
                         "property": "タスクの状態",
                         "formula": {
                             "string": {
-                                "equals": "過去の未完了タスク"
+                                "equals": "過去の未確認タスク"
                             }
                         }
                     }
@@ -39,16 +41,26 @@ def get_daily_task_items():
             }
         }
     )
-
-    result = []
+    result = {}
     # 結果を表示
     for item in results['results']:
-        # json_str = json.dumps(item, indent=4)
-        # print(json_str, ensure_ascii=False)
-        result.append({
-            'title': item['properties']['name']['title'][0]['plain_text'],
-            'status': item['properties']['ステータス']['select']['name'],
-        })
+        json_str = json.dumps(item, indent=4, ensure_ascii=False)
+        print(json_str)
+        key = item['properties']['タスクの状態']['formula']['string']
+        title = item['properties']['name']['title'][0]['plain_text']
+        status = item['properties']['ステータス']['select']['name']
+        if key in result:
+            result[key].append({
+                'title': title,
+                'status': status,
+            })
+        else:
+            result[key] = [
+                {
+                    'title': title,
+                    'status': status,
+                }
+            ]
     return result
 
 
@@ -105,9 +117,11 @@ def get_calendar_items():
         start_at = datetime.datetime.fromisoformat(
             start_at_str).strftime("%#H:%M")
         end_at = datetime.datetime.fromisoformat(end_at_str).strftime("%#H:%M")
+        is_now = is_time_in_range(start_at, end_at)
         result.append({
             'title': item['properties']['Name']['title'][0]['plain_text'],
             'start_at': start_at,
             'end_at': end_at,
+            'is_now': is_now
         })
     return result
