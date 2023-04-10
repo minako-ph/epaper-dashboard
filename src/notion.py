@@ -47,7 +47,7 @@ def get_daily_task_items():
         # print(json_str)
         key = item['properties']['タスクの状態']['formula']['string']
         title = item['properties']['name']['title'][0]['plain_text']
-        status = item['properties']['ステータス']['select']['name']
+        status = item['properties']['ステータス']['status']['name']
         if key in result:
             result[key].append({
                 'title': title,

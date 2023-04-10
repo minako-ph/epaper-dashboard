@@ -48,7 +48,9 @@ def doProcess(currentIndex):
                 time.sleep(300)
                 new_tasks = get_daily_task_items()
                 new_items = get_calendar_items()
-                if DeepDiff(new_tasks, tasks) or set(new_items) != set(items):
+                has_diff_tasks = 'values_changed' in DeepDiff(new_tasks, tasks)
+                has_diff_items = 'values_changed' in DeepDiff(new_items, items)
+                if has_diff_tasks or has_diff_items:
                     # 差分があった場合は再描画
                     tasks = new_tasks
                     items = new_items
@@ -56,17 +58,21 @@ def doProcess(currentIndex):
                 else:
                     continue
     except IOError as e:
-        logging.info(e)
+        logging.error(f"IO error occurred: {e}")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
     except KeyboardInterrupt:
-        logging.info("ctrl + c:")
+        logging.error("ctrl + c:")
         epd5in65f.epdconfig.module_exit()
         exit()
 
 
 def getKeyEvent(currentIndex):
+    device = None
     while True:
         try:
-            device = evdev.InputDevice("/dev/input/event0")
+            if device is None:
+                device = evdev.InputDevice("/dev/input/event0")
             for event in device.read_loop():
                 print("evdev.ecodes.KEY[event.code]")
                 print(evdev.ecodes.KEY[event.code])
@@ -84,9 +90,12 @@ def getKeyEvent(currentIndex):
                         if event.code == evdev.ecodes.KEY_C:
                             # リロード
                             doProcess(currentIndex)
-        except:
-            print("Retry...")
-            time.sleep(1)
+        except OSError as e:
+            logging.error(f"Device error: {e}")
+            if device:
+                device.close()
+                device = None
+            time.sleep(1)  # 少し待ってから再試行
 
 
 if __name__ == "__main__":
@@ -97,6 +106,6 @@ if __name__ == "__main__":
 
     # 初回実行
     with ThreadPoolExecutor() as executor:
-        currentIndex = 1
+        currentIndex = 0
         executor.submit(doProcess, currentIndex)
         executor.submit(getKeyEvent, currentIndex)
