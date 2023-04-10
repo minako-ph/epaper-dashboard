@@ -48,7 +48,9 @@ def doProcess(currentIndex):
                 time.sleep(300)
                 new_tasks = get_daily_task_items()
                 new_items = get_calendar_items()
-                if DeepDiff(new_tasks, tasks) or set(new_items) != set(items):
+                has_diff_tasks = 'values_changed' in DeepDiff(new_tasks, tasks)
+                has_diff_items = 'values_changed' in DeepDiff(new_items, items)
+                if has_diff_tasks or has_diff_items:
                     # 差分があった場合は再描画
                     tasks = new_tasks
                     items = new_items
